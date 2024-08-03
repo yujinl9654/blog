@@ -2,6 +2,13 @@
 
 import { ChangeEvent, FormEvent, useState } from 'react';
 import Banner, { BannerData } from './Banner';
+import { sendContactEmail } from '@/service/contact';
+
+const DEFAULT_DATA = {
+  from: '',
+  subject: '',
+  message: '',
+};
 
 type Form = {
   from: string;
@@ -9,11 +16,7 @@ type Form = {
   message: string;
 };
 export default function ContactForm() {
-  const [form, setForm] = useState<Form>({
-    from: '',
-    subject: '',
-    message: '',
-  });
+  const [form, setForm] = useState<Form>(DEFAULT_DATA);
   const [banner, setBanner] = useState<BannerData | null>(null);
   const onChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -21,12 +24,23 @@ export default function ContactForm() {
   };
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(form);
-    setBanner({ message: '메일을 발송했습니다.', state: 'success' });
-
-    setTimeout(() => {
-      setBanner(null);
-    }, 3000);
+    // console.log(form);
+    sendContactEmail(form)
+      .then(() => {
+        setBanner({ message: '메일을 발송했습니다.', state: 'success' });
+        setForm(DEFAULT_DATA);
+      })
+      .catch(() => {
+        setBanner({
+          message: '메일을 전송에 실패했습니다. 다시 시도해 주세요.',
+          state: 'error',
+        });
+      })
+      .finally(() => {
+        setTimeout(() => {
+          setBanner(null);
+        }, 3000);
+      });
   };
 
   return (
